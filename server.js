@@ -34,8 +34,10 @@ wss.on('connection', (ws) => {
 
   // Initial message object to send to the connecting client.
   const initialMessage = {
+    id: uuid(),
     type: 'incomingNotification',
-    content: 'Welcome to Chatty!'
+    content: 'Welcome to Chatty!',
+    timestamp: new Date()
   };
 
   // Send the initial message to the client which just connected.
@@ -47,7 +49,10 @@ wss.on('connection', (ws) => {
     console.log(`WS message ${message}`);
     // Message payloads are all JSON, so parse into JS data structures.
     const json = JSON.parse(message);
-    // Create a message to send back out
+    if (json.type === 'postNotification') {
+      json.type = 'incomingNotification'
+    } else { json.type = 'incomingMessage' }
+  // Create a message to send back out
     const outMsg = {
       // Spread operator here copies all the key-value pairs from the json object into this object
       ...json,
