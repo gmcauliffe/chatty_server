@@ -4,6 +4,7 @@ const express = require('express');
 const WebSocket = require('ws');
 const WebSocketServer = WebSocket.Server;
 const uuid = require('uuid/v4');
+const CLIENTS = [];
 
 // Set the port to 3001
 const PORT = 3001;
@@ -26,10 +27,12 @@ wss.broadcast = msg => {
   });
 };
 
+let connections = 0;
 // Set up a callback that will run when a client connects to the server
 // When a client connects they are assigned a socket, represented by
 // the ws parameter in the callback.
 wss.on('connection', (ws) => {
+  CLIENTS.push(ws);
   console.log('Client connected');
 
   // Initial message object to send to the connecting client.
@@ -39,14 +42,22 @@ wss.on('connection', (ws) => {
     content: 'Welcome to Chatty!',
     timestamp: new Date()
   };
-
   // Send the initial message to the client which just connected.
   // This allows the react app to start with the right data.
   ws.send(JSON.stringify(initialMessage));
 
+  connections = (CLIENTS.length);
+
+  usersOnline = {
+    id: uuid(),
+    type: 'userCount',
+    content: connections < 1 ? 'No other users online' : (connections + ' users online')
+  }
+  
+  wss.broadcast(JSON.stringify(usersOnline));
+
   // Message event handler, fires whenever a message from a client is received.
   ws.on('message', message => {
-    console.log(`WS message ${message}`);
     // Message payloads are all JSON, so parse into JS data structures.
     const json = JSON.parse(message);
     if (json.type === 'postNotification') {
@@ -66,7 +77,11 @@ wss.on('connection', (ws) => {
   });
 
   // Set up a callback for when a client closes the socket. This usually means they closed their browser.
-  ws.on('close', () => console.log('Client disconnected'));
+  ws.on('close', () => {
+    CLIENTS.pop();
+    console.log('Client disconnected');
+  });
+  
 });
 
 console.log(`Socket Server is now listening at ws://localhost:${PORT}/`);
