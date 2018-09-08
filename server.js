@@ -4,7 +4,18 @@ const express = require('express');
 const WebSocket = require('ws');
 const WebSocketServer = WebSocket.Server;
 const uuid = require('uuid/v4');
+
+// Connected users
 const CLIENTS = [];
+
+// Username color array
+const possibleColors = [
+  '#c3423f',
+  '#fde74c',
+  '#9bc53d',
+  '#404e4d',
+  '#6495ed'
+];
 
 // Set the port to 3001
 const PORT = 3001;
@@ -27,7 +38,18 @@ wss.broadcast = msg => {
   });
 };
 
-let connections = 0;
+
+
+
+function generateAnonymous() {
+  let text = 'Anonymous';
+  var possible = '0123456789';
+  for (var i = 0; i < 2; i++) {
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+  }
+  return text;
+}
+
 // Set up a callback that will run when a client connects to the server
 // When a client connects they are assigned a socket, represented by
 // the ws parameter in the callback.
@@ -35,6 +57,7 @@ wss.on('connection', (ws) => {
   CLIENTS.push(ws);
   console.log('Client connected');
 
+  
   // Initial message object to send to the connecting client.
   const initialMessage = {
     id: uuid(),
@@ -46,13 +69,18 @@ wss.on('connection', (ws) => {
   // This allows the react app to start with the right data.
   ws.send(JSON.stringify(initialMessage));
 
-  connections = (CLIENTS.length);
+  let connections = (CLIENTS.length);
+  let userColor = possibleColors[CLIENTS.length - 1];
+  let anon = generateAnonymous();
 
   usersOnline = {
     id: uuid(),
-    type: 'userCount',
-    content: connections < 2 ? 'No other users online' : (connections + ' users online')
+    type: 'userJoin',
+    content: connections < 2 ? 'No other users online' : (connections + ' users online'),
+    color: userColor,
+    name: anon
   }
+  console.log(usersOnline);
   
   wss.broadcast(JSON.stringify(usersOnline));
 
