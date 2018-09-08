@@ -51,7 +51,7 @@ wss.on('connection', (ws) => {
   usersOnline = {
     id: uuid(),
     type: 'userCount',
-    content: connections < 1 ? 'No other users online' : (connections + ' users online')
+    content: connections < 2 ? 'No other users online' : (connections + ' users online')
   }
   
   wss.broadcast(JSON.stringify(usersOnline));
